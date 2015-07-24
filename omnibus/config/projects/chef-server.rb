@@ -47,7 +47,7 @@ dependency "runit"
 dependency "chef_backup-gem" # chef-server-ctl backup
 
 # the backend
-dependency "postgresql92"
+dependency "postgresql94"
 dependency "rabbitmq"
 dependency "redis" # dynamic routing controls
 dependency "opscode-solr4"
