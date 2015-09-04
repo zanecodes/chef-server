@@ -212,12 +212,13 @@ solr_query(Query, ReqId) ->
                      end).
 
 solr_search(Query) ->
-    try
+%    try
         chef_solr:search(Query)
-    catch
-        Error:Reason ->
-            {Error, Reason}
-    end.
+    % catch
+    %     Error:Reason ->
+    %         {Error, Reason}
+    % end
+.
 
 %% POST to /search represents a partial search request
 %% The posted request body should be of the form:
@@ -272,7 +273,10 @@ make_bulk_get_fun(DbContext, OrgName, {data_bag, BagName}, [], _Req) ->
 make_bulk_get_fun(DbContext, OrgName, Type, [], _Req) ->
     %% all other types just call into chef_db
     fun(Ids) ->
-            chef_db:bulk_get(DbContext, OrgName, Type, Ids)
+            io:format("HEY we have Ids =  ~p~n", [Ids]),
+            Items = chef_db:bulk_get(DbContext, OrgName, Type, Ids),
+            io:format("HEY we have Items =  ~p~n", [Items]),
+            Items
     end;
 make_bulk_get_fun(DbContext, OrgName, Type, NamePaths, Req) ->
     %% Here NamePaths is a non-empty list of {Name, Path} tuples. This is the bulk_get fun
@@ -344,7 +348,8 @@ make_query_from_params(Req) ->
     QueryString = wrq:get_qs_value("q", Req),
     Start = wrq:get_qs_value("start", Req),
     Rows = wrq:get_qs_value("rows", Req),
-    chef_solr:make_query_from_params(ObjType, QueryString, Start, Rows).
+    Sort = wrq:get_qs_value("sort", Req),
+    chef_solr:make_query_from_params(ObjType, QueryString, Start, Rows, Sort).
 
 extract_path(_Item, []) ->
     null;

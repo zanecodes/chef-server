@@ -27,10 +27,11 @@
          add_org_guid_to_query/2,
          delete_search_db/1,
          delete_search_db_by_type/2,
-         make_query_from_params/4,
+         make_query_from_params/5,
          ping/0,
          search/1,
          search/2,
+         solr_search/2,
          solr_commit/0
         ]).
 
@@ -39,13 +40,16 @@
 -spec make_query_from_params(binary()|string(),
                              string() | binary() | undefined,
                              string(),
+                             string(),
                              string()) -> #chef_solr_query{}.
-make_query_from_params(ObjType, QueryString, Start, Rows) ->
+make_query_from_params(ObjType, QueryString, Start, Rows, Sort) ->
     % TODO: super awesome error messages
     FilterQuery = make_fq_type(ObjType),
-    %% 'sort' param is ignored and hardcoded because indexing
+
+    %% 'sort' param used to be ignored and hardcoded because indexing
     %% scheme doesn't support sorting since there is only one field.
-    Sort = "X_CHEF_id_CHEF_X asc",
+%    Sort = "X_CHEF_id_CHEF_X asc",
+
     #chef_solr_query{query_string = check_query(QueryString),
                      filter_query = FilterQuery,
                      start = decode({nonneg_int, "start"}, Start, 0),
@@ -69,13 +73,41 @@ search(Query) ->
     SolrUrl = envy:get(chef_index, solr_url, string),
     search(Query, SolrUrl).
 
-
 -spec search(#chef_solr_query{}, string()) ->
                     {ok, non_neg_integer(), non_neg_integer(), [binary()]} |
                     {error, {solr_400, string()}} |
                     {error, {solr_500, string()}}.
 search(#chef_solr_query{} = Query, SolrUrl) ->
+    case Query#chef_solr_query.sort of
+        undefined -> solr_search(Query#chef_solr_query{sort = "X_CHEF_id_CHEF_X asc"}, SolrUrl);
+        _ ->
+            io:format("HELLO~n~n~n", []),
+            % {_SQL, _} = sqerl_adhoc:select(
+            %              ["id"],
+            %              "nodes",
+            %              [{order_by,
+            %                ["serialized_object"]}],
+            %              sqerl_client:sql_parameter_style()),
+
+%            io:format("THPGH ~p~n", [SQL]),
+            Result = sqerl:execute(<<"select id, serialized_object->'automatic'->>'ipaddress' from nodes order by serialized_object->'automatic'->>'ipaddress' asc limit 3">>, []),
+            case Result of
+                {ok, Rows} ->
+                    io:format("??? ~p ! ~n", [Rows]),
+                    IdList = [Id || [{<<"id">>, Id} | _]<- Rows ],
+                    {ok, 0, length(IdList), IdList};
+                _ -> io:format("??? ~p ? ~n", [Result]),
+                     {ok,0,0,[]}
+            end
+    end.
+
+-spec solr_search(#chef_solr_query{}, string()) ->
+                    {ok, non_neg_integer(), non_neg_integer(), [binary()]} |
+                    {error, {solr_400, string()}} |
+                    {error, {solr_500, string()}}.
+solr_search(#chef_solr_query{} = Query, SolrUrl) ->
     %% FIXME: error handling
+
     Url = SolrUrl ++ make_solr_query_url(Query),
     {ok, Code, _Head, Body} = ibrowse:send_req(Url, [], get),
     case Code of
@@ -86,6 +118,7 @@ search(#chef_solr_query{} = Query, SolrUrl) ->
             NumFound = ej:get({<<"numFound">>}, Response),
             DocList = ej:get({<<"docs">>}, Response),
             Ids = [ ej:get({<<"X_CHEF_id_CHEF_X">>}, Doc) || Doc <- DocList ],
+            io:format("~p~n", [{ok, Start, NumFound, Ids}]),
             {ok, Start, NumFound, Ids};
         %% We only have the transformed query at this point, so for the following two error
         %% conditions, we just send along the full query URL. This is for logging only and
