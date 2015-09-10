@@ -78,8 +78,10 @@ search(Query) ->
                     {error, {solr_400, string()}} |
                     {error, {solr_500, string()}}.
 search(#chef_solr_query{} = Query, SolrUrl) ->
-    case Query#chef_solr_query.sort of
+    Sort = Query#chef_solr_query.sort,
+    case Sort of
         undefined -> solr_search(Query#chef_solr_query{sort = "X_CHEF_id_CHEF_X asc"}, SolrUrl);
+        "" -> solr_search(Query#chef_solr_query{sort = "X_CHEF_id_CHEF_X asc"}, SolrUrl);
         _ ->
             io:format("HELLO~n~n~n", []),
             % {_SQL, _} = sqerl_adhoc:select(
@@ -89,15 +91,34 @@ search(#chef_solr_query{} = Query, SolrUrl) ->
             %                ["serialized_object"]}],
             %              sqerl_client:sql_parameter_style()),
 
-%            io:format("THPGH ~p~n", [SQL]),
-            Result = sqerl:execute(<<"select id, serialized_object->'automatic'->>'ipaddress' from nodes order by serialized_object->'automatic'->>'ipaddress' asc limit 3">>, []),
+            OrderBy =
+                case Sort of
+                    "" -> <<"">>;
+                    _ ->
+                        {Dir, Rem} = case lists:nth(1, Sort) of
+                                         $- -> {"desc", tl(Sort)};
+                                         _ -> {"asc", Sort}
+                                     end,
+                        Col = case Rem of
+                                  "ipaddress" -> "serialized_object->'automatic'->>'ipaddress'";
+                                  "name" -> "serialized_object->>'name'";
+                                  "fqdn" -> "serialized_object->'automatic'->>'fqdn'";
+                                  _ -> io:format("Unknown sort column ~p~n", [Rem]),
+                                       "0"
+                              end,
+                        erlang:iolist_to_binary([<<" order by ">>, Col, <<" ">>, Dir])
+                end,
+            Qstr = erlang:iolist_to_binary(
+                     [<<"select id from nodes">>, OrderBy,
+                      <<" limit ">>, integer_to_list(Query#chef_solr_query.rows),
+                      <<" offset ">>, integer_to_list(Query#chef_solr_query.start)]),
+            Result = sqerl:execute(Qstr, []),
             case Result of
-                {ok, Rows} ->
-                    io:format("??? ~p ! ~n", [Rows]),
+                {ok, Rows} ->  % io:format("??? ~p ! ~n", [Rows]),
                     IdList = [Id || [{<<"id">>, Id} | _]<- Rows ],
                     {ok, 0, length(IdList), IdList};
-                _ -> io:format("??? ~p ? ~n", [Result]),
-                     {ok,0,0,[]}
+                _ -> % io:format("??? ~p ? ~n", [Result]),
+                    {ok,0,0,[]}
             end
     end.
 
