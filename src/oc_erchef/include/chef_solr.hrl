@@ -17,6 +17,7 @@
 
 -record(chef_solr_query, {
           query_string :: string(),
+          raw_query :: string(),
           filter_query :: string(),
           start :: integer(),
           rows :: integer(),

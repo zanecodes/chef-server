@@ -51,6 +51,7 @@ make_query_from_params(ObjType, QueryString, Start, Rows, Sort) ->
 %    Sort = "X_CHEF_id_CHEF_X asc",
 
     #chef_solr_query{query_string = check_query(QueryString),
+                     raw_query = sql_query(QueryString),
                      filter_query = FilterQuery,
                      start = decode({nonneg_int, "start"}, Start, 0),
                      rows = decode({nonneg_int, "rows"}, Rows, 1000),
@@ -109,9 +110,13 @@ search(#chef_solr_query{} = Query, SolrUrl) ->
                         erlang:iolist_to_binary([<<" order by ">>, Col, <<" ">>, Dir])
                 end,
             Qstr = erlang:iolist_to_binary(
-                     [<<"select id from nodes">>, OrderBy,
+                     [<<"select n.id from nodes n, flattened f">>,
+                      <<" where n.id = f.id and f.string_agg like '%">>,
+                      Query#chef_solr_query.raw_query, <<"%'">>,
+                      OrderBy,
                       <<" limit ">>, integer_to_list(Query#chef_solr_query.rows),
                       <<" offset ">>, integer_to_list(Query#chef_solr_query.start)]),
+            io:format("@@@ ~s~n", [Qstr]),
             Result = sqerl:execute(Qstr, []),
             case Result of
                 {ok, Rows} ->  % io:format("??? ~p ! ~n", [Rows]),
@@ -265,6 +270,9 @@ index_type("environment") ->
     'environment';
 index_type(DataBag) ->
     {'data_bag', list_to_binary(DataBag)}.
+
+sql_query(RawQuery) ->
+    re:replace(http_uri:decode(RawQuery), "\\*", "", [global, {return, list}]).
 
 check_query(RawQuery) ->
     case RawQuery of
