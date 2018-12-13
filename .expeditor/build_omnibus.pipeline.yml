@@ -1,0 +1,138 @@
+env:
+  BUILD_TIMESTAMP: 2018-12-14_11-22-34
+
+steps:
+  - label: Build rhel-6-x86_64
+    agents:
+      queue: omnibus-rhel-6-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        build: chef-server
+        builder-to-testers-map-path: omnibus/omnibus-builder-to-testers-map.yml
+        config: omnibus/omnibus.rb
+        install-dir: opscode
+
+  - label: Build rhel-7-x86_64
+    agents:
+      queue: omnibus-rhel-7-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        build: chef-server
+        builder-to-testers-map-path: omnibus/omnibus-builder-to-testers-map.yml
+        config: omnibus/omnibus.rb
+        install-dir: opscode
+
+  - label: Build sles-11-x86_64
+    agents:
+      queue: omnibus-sles-11-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        build: chef-server
+        builder-to-testers-map-path: omnibus/omnibus-builder-to-testers-map.yml
+        config: omnibus/omnibus.rb
+        install-dir: opscode
+
+  - label: Build sles-12-x86_64
+    agents:
+      queue: omnibus-sles-12-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        build: chef-server
+        builder-to-testers-map-path: omnibus/omnibus-builder-to-testers-map.yml
+        config: omnibus/omnibus.rb
+        install-dir: opscode
+
+  - label: Build ubuntu-1404-x86_64
+    agents:
+      queue: omnibus-ubuntu-1404-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        build: chef-server
+        builder-to-testers-map-path: omnibus/omnibus-builder-to-testers-map.yml
+        config: omnibus/omnibus.rb
+        install-dir: opscode
+
+  - label: Build ubuntu-1604-x86_64
+    agents:
+      queue: omnibus-ubuntu-1604-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        build: chef-server
+        builder-to-testers-map-path: omnibus/omnibus-builder-to-testers-map.yml
+        config: omnibus/omnibus.rb
+        install-dir: opscode
+
+  - wait
+
+  - label: Create Build Record
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        create-build-record: chef-server
+
+  # - label: set metadata
+  #   command: buildkite-agent meta-data set "chef-server_build_version" "12.19.16+20181213112234"
+
+  - wait
+
+  - label: Test rhel-6-x86_64
+    agents:
+      queue: omnibus-rhel-6-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        test: chef-server
+        test-path: omnibus/omnibus-test.sh
+
+  - label: Test rhel-7-x86_64
+    agents:
+      queue: omnibus-rhel-7-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        test: chef-server
+        test-path: omnibus/omnibus-test.sh
+
+  - label: Test sles-11-x86_64
+    agents:
+      queue: omnibus-sles-11-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        test: chef-server
+        test-path: omnibus/omnibus-test.sh
+
+  - label: Test sles-12-x86_64
+    agents:
+      queue: omnibus-sles-12-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        test: chef-server
+        test-path: omnibus/omnibus-test.sh
+
+  - label: Test ubuntu-1404-x86_64
+    agents:
+      queue: omnibus-ubuntu-1404-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        test: chef-server
+        test-path: omnibus/omnibus-test.sh
+
+  - label: Test ubuntu-1604-x86_64
+    agents:
+      queue: omnibus-ubuntu-1604-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        test: chef-server
+        test-path: omnibus/omnibus-test.sh
+
+  - label: Test ubuntu-1804-x86_64
+    agents:
+      queue: omnibus-ubuntu-1804-x86_64
+    plugins:
+      ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+        test: chef-server
+        test-path: omnibus/omnibus-test.sh
+
+  # # - wait
+
+  # # - label: Promote to omnibus-current-local
+  # #   plugins:
+  # #     ssh://git@github.com/chef/omnibus-buildkite-plugin.git#2203a09613413a10dd9bb901f6a797dd9365686f:
+  # #       promote: chef-server

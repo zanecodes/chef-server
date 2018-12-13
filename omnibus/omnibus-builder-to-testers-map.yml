@@ -1,0 +1,19 @@
+# Acceptable platform versions: aix-7.1, debian-8, debian-9, el-6, el-7, freebsd-10, freebsd-11,
+# mac_os_x-10.12, mac_os_x-10.13, mac_os_x-10.14, sles-11, sles-12, sles-15, solaris-11, solaris-11-sparc,
+# ubuntu-14.04, ubuntu-16.04, ubuntu-18.04, windows-2012r2, windows-2008r2, windows-2012, windows-2016
+
+# Acceptable architectures: aarch64, i86pc, powerpc, ppc64le, ppc64, s390x, sun4v, x86_64, i386
+---
+el-6-x86_64:
+  - el-6-x86_64
+el-7-x86_64:
+  - el-7-x86_64
+sles-11-x86_64:
+  - sles-11-x86_64
+sles-12-x86_64:
+  - sles-12-x86_64
+ubuntu-14.04-x86_64:
+  - ubuntu-14.04-x86_64
+ubuntu-16.04-x86_64:
+  - ubuntu-16.04-x86_64
+  - ubuntu-18.04-x86_64
